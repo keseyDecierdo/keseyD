@@ -13,7 +13,7 @@
             <td>ACTION</td>
         </tr>
     </thead>
-
+    @include('flash-message')
     <tbody>
         @foreach($cruds as $crud)
         <tr>

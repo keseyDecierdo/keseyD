@@ -4,19 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\crud;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CrudsController extends Controller
 {
 
 
     /**
-     * Display a listing of the resource.
+     * Display the dashboard.
      */
     public function index()
     {
 
         $cruds = Crud::all();
-        return view('index', compact('cruds'));
+        return view('dashboard', compact('cruds'));
     }
 
     /**
@@ -29,19 +30,28 @@ class CrudsController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * Demonstrates: Success Message & Validation Error (empty form submission)
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'first_name' => 'required',
-            'last_name' => 'required',
-            'gender' => 'required',
-            'qualification' => 'required',
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'gender' => 'required|string',
+            'qualification' => 'required|string',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('users.index')
+                ->with('error', 'Please fill out all required fields before submitting the form.')
+                ->withInput();
+        }
+
+        $validated = $validator->validated();
 
         crud::create($validated);
 
-        return redirect()->back()->with('success', 'Record saved successfully.');
+        return redirect()->route('users.index')->with('success', 'Student record added successfully!');
     }
 
     /**
@@ -63,32 +73,65 @@ class CrudsController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * Demonstrates: Info Message (system notice)
      */
     public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
-            'first_name' => 'required',
-            'last_name' => 'required',
-            'gender' => 'required',
-            'qualification' => 'required',
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'gender' => 'required|string',
+            'qualification' => 'required|string',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('users.index')
+                ->with('error', 'Please fill out all required fields before updating the record.')
+                ->withInput();
+        }
+
+        $validated = $validator->validated();
 
         $crud = crud::findOrFail($id);
         $crud->update($validated);
 
-        return redirect()->route('users.index')->with('success', 'Record updated successfully.');
+        return redirect()->route('users.index')->with('info', 'Student record updated. Please review the changes.');
     }
 
     /**
      * Remove the specified resource from storage.
+     * Demonstrates: Warning Message (restricted/dangerous action)
      */
     public function destroy(string $id)
     {
         $crud = crud::findOrFail($id);
         $crud->delete();
 
-        return redirect()->route('users.index')->with('success', 'Record deleted successfully.');
+        return redirect()->route('users.index')->with('warning', 'if you perform the delete action. it will be permanently deleted!');
     }
-    
+
+    /**
+     * Demonstrates: Error Message (invalid action)
+     */
+    public function invalidAction()
+    {
+        return redirect()->route('users.index')->with('error', 'Woops, something went wrong! Invalid action.');
+    }
+
+    /**
+     * Demonstrates: Warning Message (restricted page access)
+     */
+    public function restricted()
+    {
+        return redirect()->route('users.index')->with('warning', 'Access denied! You do not have permission to view this page.');
+    }
+
+    /**
+     * Demonstrates: Info Message (system notice)
+     */
+    public function notice()
+    {
+        return redirect()->route('users.index')->with('info', 'System maintenance scheduled for tomorrow at 10:00 PM.');
+    }
 
 }
